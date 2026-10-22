@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Hali Kape - Products</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header>
+
+        <h1>HALi’ KAPE</h1>
+
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="products.html">Products</a>
+            <a href="about.html">About Us</a>
+            <a href="contact.html">Contact Us</a>
+        </nav>
+
+    </header>
+
+
+    <h1>Hali Kape Coffee Shop</h1>
+<h2>Menu</h2>
+<div id="menu"></div>
+
+
+<h2>Your Order</h2>
+<div id="cart"></div>
+<p>Subtotal: ₱<span id="subtotal">0</span></p>
+<p>Discount: ₱<span id="discount">0</span></p>
+<p id="total">Total: ₱0</p>
+
+
+<input id="name" placeholder="Your name">
+<p>Payment: <input id="payment" type="number" placeholder="Enter payment"></p>
+<p>Change: ₱<span id="change">0</span></p>
+<button id="placeOrder">Place Order</button>
+<button id="clearOrder">Clear Order</button>
+<p id="message"></p>
+
+
+<script>
+const menu = [
+  { id: 1, name: 'Espresso', price: 80, type: 'drink', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRbamkRoI7-nP_ZPFkZVw8aXYY3zrSGukesc3X9MZZzRpyNCkVHaA32nEk&s=10' },
+  { id: 2, name: 'Cappuccino', price: 110, type: 'drink', img: 'https://www.nescafe.com/nz/sites/default/files/2023-09/NESCAF%C3%89%20Cappuccino%20step%201%20mobile.jpg' },
+  { id: 3, name: 'Caffe Latte', price: 120, type: 'drink', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR43zeoElNo9A8jVD-iv0bL43PLpVgjtBWO6aNqBJ2Y9ss50oJkRuqHiCY&s=10' },
+  { id: 4, name: 'Iced Americano', price: 100, type: 'drink', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQEgGWBhx06d0lCKuwAR6hFdjYSaTKAeNnbXEATRG97Ow&s=10' },
+  { id: 5, name: 'Dubai Chewy Cookie', price: 120, type: 'food', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRqc4J4n7Wvr4fuGWaYX3uezNusj9uH1_gMF_pTAezKFK-1BJJXJtt5nSAj&s=10' },
+  { id: 6, name: 'Matcha Latte', price: 150, type: 'drink', img: 'https://images.unsplash.com/photo-1515823064-d6e0c04616a7?w=100' },
+  { id: 7, name: 'Hazel Nut', price: 90, type: 'drink', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRykZ04_044r6IEghD5WeBwJBpny0j2n7Lqv_MK1vfm6gEi6E1dniZ58BgH&s=10' },
+  { id: 8, name: 'Blueberry Muffin', price: 70, type: 'food', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQz7KMtPtcrpeXj29BiAv6DHKuPHMO9xjiRJ9uPvuxUvwjjSK95uSiXEY0&s=10' }
+];
+
+
+const sizes = { Small: 0, Medium: 20, Large: 40 };
+let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+
+function showMenu() {
+  let html = '';
+  for (const item of menu) {
+    html += `<div class="row">
+      <img src="${item.img}" alt="${item.name}">
+      <span>${item.name} - ₱${item.price}</span>
+      ${item.type === 'drink' ?
+        `<select id="size${item.id}">
+          <option>Small</option><option>Medium</option><option>Large</option>
+        </select>` : ''}
+      <button onclick="addToCart(${item.id})">Add</button>
+    </div>`;
+  }
+  document.getElementById('menu').innerHTML = html;
+}
+
+
+function addToCart(id) {
+  const item = menu.find(m => m.id === id);
+  const size = item.type === 'drink'
+    ? document.getElementById('size' + id).value : 'Regular';
+  const line = cart.find(c => c.id === id && c.size === size);
+
+
+  if (line) line.qty++;
+  else cart.push({ id, name: item.name, price: item.price, size, qty: 1 });
+
+
+  showCart();
+}
+
+
+function removeFromCart(id, size) {
+  cart = cart.filter(c => !(c.id === id && c.size === size));
+  showCart();
+}
+
+
+function changeQty(id, size, amount) {
+  const line = cart.find(c => c.id === id && c.size === size);
+  if (line) line.qty += amount;
+  cart = cart.filter(c => c.qty > 0);
+  showCart();
+}
+
+
+function getSubtotal() {
+  return cart.reduce((sum, c) =>
+    sum + (c.price + (sizes[c.size] || 0)) * c.qty, 0);
+}
+
+
+function getDiscount() {
+  return getSubtotal() >= 500 ? getSubtotal() * 0.10 : 0;
+}
+
+
+function getTotal() {
+  return getSubtotal() - getDiscount();
+}
+
+
+function showCart() {
+  let html = '';
+  for (const line of cart) {
+    html += `<div class="row">
+      <span>${line.name} (${line.size}) x${line.qty}</span>
+      <span>₱${(line.price + (sizes[line.size] || 0)) * line.qty}
+      <button onclick="changeQty(${line.id},'${line.size}',-1)">-</button>
+      <button onclick="changeQty(${line.id},'${line.size}',1)">+</button>
+      <button onclick="removeFromCart(${line.id},'${line.size}')">Remove</button>
+      </span></div>`;
+  }
+
+
+  if (cart.length === 0) html = '<p>No items yet.</p>';
+  document.getElementById('cart').innerHTML = html;
+  document.getElementById('subtotal').textContent = getSubtotal();
+  document.getElementById('discount').textContent = getDiscount();
+  document.getElementById('total').textContent = 'Total: ₱' + getTotal();
+
+
+  localStorage.setItem('cart', JSON.stringify(cart));
+  updateChange();
+}
+
+
+function updateChange() {
+  const payment = Number(document.getElementById('payment').value);
+  document.getElementById('change').textContent =
+    payment >= getTotal() ? (payment - getTotal()).toFixed(2) : 0;
+}
+
+
+function clearOrder() {
+  cart = [];
+  document.getElementById('payment').value = '';
+  showCart();
+  document.getElementById('message').textContent = 'Order cleared.';
+}
+
+
+function placeOrder() {
+  const name = document.getElementById('name').value.trim();
+  const payment = Number(document.getElementById('payment').value);
+  const message = document.getElementById('message');
+
+
+  if (name === '') {
+    message.textContent = 'Please enter your name.';
+    return;
+  }
+  if (cart.length === 0) {
+    message.textContent = 'Your order is empty. Please add an item.';
+    return;
+  }
+  if (document.getElementById('payment').value === '' ||
+      payment < getTotal()) {
+    message.textContent = 'Insufficient payment. Please enter enough money.';
+    return;
+  }
+
+
+  message.textContent = `Thank you, ${name}! Total: ₱${getTotal().toFixed(2)}. Change: ₱${(payment - getTotal()).toFixed(2)}. We are preparing your order.`;
+  cart = [];
+  showCart();
+  document.getElementById('payment').value = '';
+  updateChange();
+}
+
+
+document.getElementById('placeOrder').addEventListener('click', placeOrder);
+document.getElementById('clearOrder').addEventListener('click', clearOrder);
+document.getElementById('payment').addEventListener('input', updateChange);
+
+
+showMenu();
+showCart();
+</script>
+</body>
+</html>
+
+
